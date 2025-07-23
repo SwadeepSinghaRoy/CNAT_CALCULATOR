@@ -1,96 +1,268 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="calculatorApp">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CNAT CALCULATOR</title>
-  <link rel="stylesheet" href="style.css"/>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .calculator {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .header {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .close-btn {
+      background: transparent;
+      color: #ccc;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .display {
+      background: rgba(0, 0, 0, 0.2);
+      color: #0f0;
+      padding: 20px;
+      font-size: 2rem;
+      text-align: right;
+      min-height: 60px;
+    }
+
+    .buttons,
+    .sci-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 15px;
+    }
+
+    .buttons button,
+    .sci-buttons button {
+      padding: 15px;
+      font-size: 1.1rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      border-radius: 10px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .buttons button:active,
+    .sci-buttons button:active {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .operator {
+      background-color: #f57c00;
+    }
+
+    .operator:active {
+      background-color: #e65100;
+    }
+
+    .equal {
+      background-color: #4caf50;
+      color: white;
+      grid-column: span 2;
+    }
+
+    .clear {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .cut {
+      background-color: #9c27b0;
+      color: white;
+    }
+
+    .toggle-mode {
+      text-align: center;
+      padding-bottom: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 400px) {
+
+      .buttons button,
+      .sci-buttons button {
+        padding: 12px;
+        font-size: 1rem;
+      }
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f1f1f1;
+      letter-spacing: 0.5px;
+      text-align: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: none;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    }
+
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px #00e5ff, 0 0 10px #00e5ff, 0 0 20px #00e5ff;
+      }
+
+      to {
+        text-shadow: 0 0 10px #ff6ec4, 0 0 20px #ff6ec4, 0 0 30px #ff6ec4;
+      }
+    }
+  </style>
 </head>
+
 <body ng-controller="CalculatorController">
-  <div class="calculator-container" ng-show="visible">
-    <div class="titlebar">
-      <div class="title">CNAT CALCULATOR</div>
-      <button class="close-btn" ng-click="visible = false">&times;</button>
+  <div class="container">
+    <div class="calculator" ng-class="{hidden: isClosed}" ng-keydown="handleKey($event)" tabindex="0">
+      <div class="header">
+        <span>CNAT CALCULATOR</span>
+        <button class="close-btn" ng-click="isClosed = true">×</button>
+      </div>
+      <div class="display">{{ expression || '0' }}</div>
+
+      <div class="toggle-mode">
+        <button class="close-btn" ng-click="showScientific = !showScientific">
+          {{ showScientific ? 'Standard' : 'Scientific' }}
+        </button>
+      </div>
+
+      <div class="sci-buttons" ng-show="showScientific">
+        <button ng-click="append('Math.sqrt(')">√</button>
+        <button ng-click="append('Math.pow(')">x^y</button>
+        <button ng-click="append('Math.sin(')">sin</button>
+        <button ng-click="append('Math.cos(')">cos</button>
+
+        <button ng-click="append('Math.tan(')">tan</button>
+        <button ng-click="append('Math.log(')">log</button>
+        <button ng-click="append('Math.PI')">π</button>
+        <button ng-click="append('Math.E')">e</button>
+      </div>
+
+      <div class="buttons">
+        <button class="clear" ng-click="clear()">C</button>
+        <button ng-click="append('%')">%</button>
+        <button ng-click="append('.')">.</button>
+        <button class="operator" ng-click="append('/')">÷</button>
+
+        <button ng-click="append('7')">7</button>
+        <button ng-click="append('8')">8</button>
+        <button ng-click="append('9')">9</button>
+        <button class="operator" ng-click="append('*')">×</button>
+
+        <button ng-click="append('4')">4</button>
+        <button ng-click="append('5')">5</button>
+        <button ng-click="append('6')">6</button>
+        <button class="operator" ng-click="append('-')">−</button>
+
+        <button ng-click="append('1')">1</button>
+        <button ng-click="append('2')">2</button>
+        <button ng-click="append('3')">3</button>
+        <button class="operator" ng-click="append('+')">+</button>
+
+        <button ng-click="append('0')">0</button>
+        <button class="equal" ng-click="calculate()">=</button>
+        <button class="cut" ng-click="cut()">⌫</button>
+      </div>
     </div>
 
-    <div class="screen">{{ display || '0' }}</div>
-
-    <!-- Toggle Button -->
-    <div class="toggle-mode">
-      <button ng-click="mode = 'standard'" ng-class="{active: mode === 'standard'}">Standard</button>
-      <button ng-click="mode = 'scientific'" ng-class="{active: mode === 'scientific'}">Scientific</button>
-    </div>
-
-    <!-- Standard Buttons -->
-    <div class="buttons" ng-show="mode === 'standard'">
-      <button ng-click="clear()">C</button>
-      <button ng-click="append('%')">%</button>
-      <button ng-click="append('.')">.</button>
-      <button ng-click="append('/')">÷</button>
-
-      <button ng-click="append('7')">7</button>
-      <button ng-click="append('8')">8</button>
-      <button ng-click="append('9')">9</button>
-      <button ng-click="append('*')">×</button>
-
-      <button ng-click="append('4')">4</button>
-      <button ng-click="append('5')">5</button>
-      <button ng-click="append('6')">6</button>
-      <button ng-click="append('-')">−</button>
-
-      <button ng-click="append('1')">1</button>
-      <button ng-click="append('2')">2</button>
-      <button ng-click="append('3')">3</button>
-      <button ng-click="append('+')">+</button>
-
-      <button ng-click="append('0')" class="zero">0</button>
-      <button ng-click="calculate()">=</button>
-      <button ng-click="backspace()"><i class="fa fa-cut"></i></button>
-    </div>
-
-    <!-- Scientific Buttons -->
-    <div class="buttons" ng-show="mode === 'scientific'">
-      <button ng-click="append('Math.sqrt(')">√</button>
-      <button ng-click="append('Math.pow(')">x^y</button>
-      <button ng-click="append('Math.sin(')">sin</button>
-      <button ng-click="append('Math.cos(')">cos</button>
-
-      <button ng-click="append('Math.tan(')">tan</button>
-      <button ng-click="append('Math.log10(')">log</button>
-      <button ng-click="append('Math.PI')">π</button>
-      <button ng-click="append('Math.E')">e</button>
-
-      <!-- Include standard layout in scientific too -->
-      <button ng-click="clear()">C</button>
-      <button ng-click="append('%')">%</button>
-      <button ng-click="append('.')">.</button>
-      <button ng-click="append('/')">÷</button>
-
-      <button ng-click="append('7')">7</button>
-      <button ng-click="append('8')">8</button>
-      <button ng-click="append('9')">9</button>
-      <button ng-click="append('*')">×</button>
-
-      <button ng-click="append('4')">4</button>
-      <button ng-click="append('5')">5</button>
-      <button ng-click="append('6')">6</button>
-      <button ng-click="append('-')">−</button>
-
-      <button ng-click="append('1')">1</button>
-      <button ng-click="append('2')">2</button>
-      <button ng-click="append('3')">3</button>
-      <button ng-click="append('+')">+</button>
-
-      <button ng-click="append('0')" class="zero">0</button>
-      <button ng-click="calculate()">=</button>
-      <button ng-click="backspace()"><i class="fa fa-cut"></i></button>
+    <div ng-show="isClosed" style="text-align: center; margin-top: 20px;">
+      <button class="close-btn title" style="font-size: 1.5rem;" ng-click="isClosed = false">Open CNAT
+        Calculator</button>
     </div>
   </div>
 
-  <!-- Open Button -->
-  <button class="open-btn" ng-show="!visible" ng-click="visible = true">Open CNAT Calculator</button>
+  <script>
+    angular.module('calculatorApp', [])
+      .controller('CalculatorController', function ($scope, $timeout) {
+        $scope.expression = '';
+        $scope.isClosed = false;
+        $scope.showScientific = false;
 
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-  <script src="script.js"></script>
+        $scope.append = function (val) {
+          $scope.expression += val;
+        };
+
+        $scope.calculate = function () {
+          try {
+            $scope.expression = eval($scope.expression).toString();
+          } catch {
+            $scope.expression = 'Error';
+          }
+        };
+
+        $scope.clear = function () {
+          $scope.expression = '';
+        };
+
+        $scope.cut = function () {
+          $scope.expression = $scope.expression.slice(0, -1);
+        };
+
+        $scope.handleKey = function (event) {
+          const key = event.key;
+          if (!isNaN(key) || ['+', '-', '*', '/', '%', '.', '(', ')'].includes(key)) {
+            $scope.append(key);
+          } else if (key === 'Enter') {
+            event.preventDefault();
+            $scope.calculate();
+          } else if (key === 'Backspace') {
+            $scope.cut();
+          } else if (key === 'Escape') {
+            $scope.clear();
+          }
+          $timeout(); // trigger digest cycle
+        };
+      });
+  </script>
 </body>
+
 </html>
